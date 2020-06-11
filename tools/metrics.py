@@ -60,7 +60,9 @@ class IOU(Metric):
 
 
 class Accuracy(Metric):
+
     def __init__(self):
+        super(Accuracy, self).__init__()
         self.name = 'acc'
 
     def forward(self, output:torch.Tensor, target:torch.Tensor):
