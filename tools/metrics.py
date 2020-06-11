@@ -1,10 +1,14 @@
 import torch
+import numpy as np
+from tools.Metric import Metric
 
 _epsilon = 1e-12
 
 
-class IOU:
+class IOU(Metric):
+
     def __init__(self):
+        super(IOU, self).__init__()
         self.name = 'iou'
 
     def forward(self, output:torch.Tensor, target:torch.Tensor):
@@ -55,7 +59,7 @@ class IOU:
         return iou.item()
 
 
-class Accuracy:
+class Accuracy(Metric):
     def __init__(self):
         self.name = 'acc'
 
@@ -94,9 +98,87 @@ class Accuracy:
         """
         assert 0, "not implemented"
 
+
+class Recall(Metric):
+    """
+    Measure the recall during the training and validation process. TP and P will be accumulated during the phrase.
+    Use zero_values to zero TP and P at the beginning of the training phrase.
+    """
+
+    def __init__(self):
+        super(Recall, self).__init__()
+        self.name = "recall"
+        self.TP = 0
+        self.P = 0      # actual positive
+
+    def zero_values(self):
+        self.TP = 0
+        self.P = 0
+
+    def forward(self, output:torch.Tensor, target:torch.Tensor):
+        """
+        @param output: (N, 1)
+        @param target: (N, 1)
+        @return recall: scalar
+        """
+        assert len(output.shape)==2 and len(target.shape)==2
+        assert output.shape[1] == 1 and target.shape[1] == 1
+
+        output = (output>0.5).int()
+        target = (target>0.5).int()
+
+        TP = (output & target).sum().item()
+        P = target.sum().item()
+        self.TP += TP
+        self.P += P
+
+        recall = (self.TP + _epsilon) / (self.P + _epsilon)
+        return recall
+
+
+class Precision(Metric):
+    """
+    Measure the precision during the training and validation process. TP and P' will be accumulated during the phrase.
+    Use zero_values to zero TP and P' at the beginning of the training phrase.
+    """
+
+    def __init__(self):
+        super(Precision, self).__init__()
+        self.name = "precision"
+        self.TP = 0
+        self.P0 = 0      # predicted positive
+
+    def zero_values(self):
+        self.TP = 0
+        self.P0 = 0
+
+    def forward(self, output:torch.Tensor, target:torch.Tensor):
+        """
+        @param output: (N, 1)
+        @param target: (N, 1)
+        @return recall: scalar
+        """
+        assert len(output.shape)==2 and len(target.shape)==2
+        assert output.shape[1] == 1 and target.shape[1] == 1
+
+        output = (output>0.5).int()
+        target = (target>0.5).int()
+
+        TP = (output & target).sum().item()
+        P0 = output.sum().item()
+        self.TP += TP
+        self.P0 += P0
+
+        recall = (self.TP + _epsilon) / (self.P0 + _epsilon)
+        return recall
+
+
 if __name__ == "__main__":
-    m = IOU()
-    a = torch.randint(0, 2, (10, 1))
-    b = torch.randint(0, 2, (10, 1))
-    iou = m.forward(a, b)
+    precision = Precision()
+    for i in range(3):
+        precision.zero_values()
+        for _ in range(5):
+            a = torch.randint(0, 2, (5, 1))
+            b = torch.randint(0, 2, (5, 1))
+            print(precision.forward(a, b))
     pass
