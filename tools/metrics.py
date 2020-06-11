@@ -8,7 +8,7 @@ _epsilon = 1e-12
 class IOU(Metric):
 
     def __init__(self):
-        super(IOU, self).__init__()
+        super(IOU, self).__init__(is_accumulated=False)
         self.name = 'iou'
 
     def forward(self, output:torch.Tensor, target:torch.Tensor):
@@ -62,7 +62,7 @@ class IOU(Metric):
 class Accuracy(Metric):
 
     def __init__(self):
-        super(Accuracy, self).__init__()
+        super(Accuracy, self).__init__(is_accumulated=False)
         self.name = 'acc'
 
     def forward(self, output:torch.Tensor, target:torch.Tensor):
@@ -108,7 +108,7 @@ class Recall(Metric):
     """
 
     def __init__(self):
-        super(Recall, self).__init__()
+        super(Recall, self).__init__(is_accumulated=True)
         self.name = "recall"
         self.TP = 0
         self.P = 0      # actual positive
@@ -145,7 +145,7 @@ class Precision(Metric):
     """
 
     def __init__(self):
-        super(Precision, self).__init__()
+        super(Precision, self).__init__(is_accumulated=True)
         self.name = "precision"
         self.TP = 0
         self.P0 = 0      # predicted positive
