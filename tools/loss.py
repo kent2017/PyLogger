@@ -6,9 +6,37 @@ class Loss:
     Tensor = torch.Tensor
 
     @staticmethod
+    def JaccardBCELossClass(output, target):
+        # type:(Tensor, Tensor) -> Tensor
+        """
+        Measures the criterion for classification.
+        @param output: (N, 1)
+        @param target: (N, 1)
+        @return loss: scalar
+        """
+        assert output.shape==target.shape, "input shape must be the same as target shape"
+        assert len(output.shape) == 2
+        assert torch.all((output>=0.) & (output <=1.)), "input value must be in [0., 1.]"
+        assert torch.all((target>=0.) & (target<=1.)), "target value must be in [0., 1.]"
+
+        output = output.float()
+        target = target.float()
+
+        axis = [0, 1]
+        inter = torch.sum(output * target, axis)
+        union = torch.sum(output + target, axis) - inter
+
+        iou = (inter + _epsilon) / (union + _epsilon)  # (1, )
+        iou = torch.clamp(iou, _epsilon, 1.)
+
+        loss = -torch.log(iou).mean() + Loss.BCELoss(output, target)
+        return loss
+
+    @staticmethod
     def JaccardBCELoss(output, target):
         # type: (Tensor, Tensor) -> Tensor
         """
+        Measures the criterion -log(Jaccard Index) + BCELoss.
         @param output: (N, 1, W, H)
         @param target: (N, 1, W, H)
         @return loss: scalar
@@ -54,9 +82,9 @@ class Loss:
 
 
 if __name__ == "__main__":
-    output = torch.empty((2, 1, 2, 1), dtype=torch.float).random_(0, 101) / 100.
-    target = torch.empty((2, 1, 2, 1), dtype=torch.float).random_(0, 2)
-    res = Loss.sigmoid_jaccard_loss(output, target)
+    output = torch.empty((10, 1), dtype=torch.float).random_(0, 101) / 100.
+    target = torch.empty((10, 1), dtype=torch.float).random_(0, 2)
+    res = Loss.JaccardBCELossClass(output, target)
     print(res)
     print(torch.nn.BCELoss()(output, target).item())
     pass
