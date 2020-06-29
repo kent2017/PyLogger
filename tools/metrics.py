@@ -19,6 +19,7 @@ class IOU(Metric):
         """
         if output.shape[1] > 1:
             output = output.argmax(1, keepdim=True)
+        if target.shape[1] > 1:
             target = target.argmax(1, keepdim=True)
 
         # assert torch.all((output>=0.) & (output <=1.)), "output value must be in [0., 1.]"
