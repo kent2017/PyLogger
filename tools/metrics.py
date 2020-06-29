@@ -13,12 +13,16 @@ class IOU(Metric):
 
     def forward(self, output:torch.Tensor, target:torch.Tensor):
         """
-        @param input: (N, 1, H, W) or (N, 1)
-        @param target: (N, 1, H, W) or (N, 1)
+        @param input: (N, C, H, W), (N, C, H) or (N, C), where C = 1 or 2
+        @param target: (N, C, H, W), (N, C, H) or (N, C), where C = 1 or 2
         @return mean_iou: scalar
         """
-        assert torch.all((output>=0.) & (output <=1.)), "output value must be in [0., 1.]"
-        assert torch.all((target>=0.) & (target<=1.)), "target value must be in [0., 1.]"
+        if output.shape[1] > 1:
+            output = output.argmax(1, keepdim=True)
+            target = target.argmax(1, keepdim=True)
+
+        # assert torch.all((output>=0.) & (output <=1.)), "output value must be in [0., 1.]"
+        # assert torch.all((target>=0.) & (target<=1.)), "target value must be in [0., 1.]"
 
         if len(output.shape) == 2:
             return self._iou_class(output, target)
