@@ -26,7 +26,7 @@ class IOU(Metric):
 
         if len(output.shape) == 2:
             return self._iou_class(output, target)
-        elif len(output.shape) == 4:
+        elif len(output.shape) > 2:
             return self._iou_image(output, target)
         else:
             assert 0, "inapplicable"
