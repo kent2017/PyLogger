@@ -15,8 +15,10 @@ class IOU(Metric):
         """
         @param input: (N, C, H, W), (N, C, H) or (N, C), where C = 1 or 2
         @param target: (N, C, H, W), (N, C, H) or (N, C), where C = 1 or 2
+                    or (N, H, W),    (N, H)    or (N, )
         @return mean_iou: scalar
         """
+        n = output.size(0)
         if output.shape[1] > 1:
             output = output.argmax(1, keepdim=True)
         if len(target.shape) == len(output.shape) and target.shape[1] > 1:
@@ -25,9 +27,14 @@ class IOU(Metric):
         # assert torch.all((output>=0.) & (output <=1.)), "output value must be in [0., 1.]"
         # assert torch.all((target>=0.) & (target<=1.)), "target value must be in [0., 1.]"
 
+        output = output.contiguous()
+        target = target.contiguous()
+
         if len(output.shape) == 2:
             return self._iou_class(output, target)
         elif len(output.shape) > 2:
+            output = output.view(n, -1)
+            target = target.view(n, -1)
             return self._iou_image(output, target)
         else:
             assert 0, "inapplicable"
