@@ -7,7 +7,7 @@ class Loss:
     Tensor = torch.Tensor
 
     @staticmethod
-    def JaccardCrossEntropyLoss(output, target):
+    def JaccardLoss(output, target):
         # type:(Tensor, Tensor) -> Tensor
         """
         Measures the criterion for classification.
@@ -17,8 +17,6 @@ class Loss:
         """
         n = output.size(0)
         c = output.size(1)
-
-        CE = F.cross_entropy(output, target)
 
         output = output.contiguous()
         output = output.view(n, c, -1)
@@ -37,6 +35,23 @@ class Loss:
         iou = (inter + _epsilon) / (union + _epsilon)  # (n, )
         iou = torch.clamp(iou, _epsilon, 1.)
 
+        loss = 1-iou
+        return loss
+
+
+
+    @staticmethod
+    def JaccardCrossEntropyLoss(output, target):
+        # type:(Tensor, Tensor) -> Tensor
+        """
+        Measures the criterion for classification.
+        @param output: (N, C, H, W), float
+        @param target: (N, 1, H, W), long
+        @return loss: scalar
+        """
+        CE = F.cross_entropy(output, target)
+
+        iou = 1.-Loss.JaccardLoss(output, target)
         loss = -torch.log(iou).mean() + CE
         return loss
 
