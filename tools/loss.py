@@ -1,9 +1,41 @@
 import torch
+import torch.nn.functional as F
 
 _epsilon = 1e-12
 
 class Loss:
     Tensor = torch.Tensor
+
+    @staticmethod
+    def JaccardCrossEntropyLossClass(output, target):
+        # type:(Tensor, Tensor) -> Tensor
+        """
+        Measures the criterion for classification.
+        @param output: (N, 2), float
+        @param target: (N, ), long
+        @return loss: scalar
+        """
+        CE = F.cross_entropy(output, target)
+
+        if output.shape[1] == 2:
+            output = F.softmax(output, 1).float()[:, 1]
+
+        output = output.contiguous()
+        output = output.view(-1)
+
+        target = target.float()
+        # target_onehot = torch.zeros(output.shape).scatter_(dim=1, index=target, src=1)
+
+        axis = [0]
+        inter = torch.sum(output * target, axis)
+        union = torch.sum(output + target, axis) - inter
+
+        iou = (inter + _epsilon) / (union + _epsilon)  # (1, )
+        iou = torch.clamp(iou, _epsilon, 1.)
+
+        loss = -torch.log(iou).mean() + CE
+        return loss
+
 
     @staticmethod
     def JaccardBCELossClass(output, target):
@@ -82,10 +114,8 @@ class Loss:
 
 
 if __name__ == "__main__":
-    output = torch.empty((10, 1), dtype=torch.float).random_(0, 101) / 100.
-    target = torch.empty((10, 1), dtype=torch.float).random_(0, 2)
-    res = Loss.JaccardBCELossClass(output, target)
+    output = torch.randint(0, 2, size=(5, 2)).float()
+    target = torch.randint(0, 2, size=(5, )).long()
+    res = Loss.JaccardCrossEntropyLossClass(output, target)
     print(res)
-    print(torch.nn.BCELoss()(output, target).item())
-    pass
 
