@@ -33,9 +33,9 @@ class Loss:
         union = torch.sum(output + target, axis) - inter
 
         iou = (inter + _epsilon) / (union + _epsilon)  # (n, )
-        iou = torch.clamp(iou, _epsilon, 1.)
-
+        iou = iou.mean()
         loss = 1-iou
+        
         return loss
 
 
@@ -52,6 +52,8 @@ class Loss:
         CE = F.cross_entropy(output, target)
 
         iou = 1.-Loss.JaccardLoss(output, target)
+        iou = torch.clamp(iou, _epsilon, 1.)
+
         loss = -torch.log(iou).mean() + CE
         return loss
 
