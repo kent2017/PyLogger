@@ -35,7 +35,7 @@ class Loss:
         iou = (inter + _epsilon) / (union + _epsilon)  # (n, )
         iou = iou.mean()
         loss = 1-iou
-        
+
         return loss
 
 
