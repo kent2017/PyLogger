@@ -35,6 +35,7 @@ class Loss:
             weights = weights.float()
             weights = weights.contiguous()
             weights = weights.view(n, -1)   #(n, h)
+            weights = weights / weights.sum(1, keepdim=True) * float(weights.size(1))
 
             ce = -(F.log_softmax(output, dim=1) * target_onehot).sum(dim=1)     #(n, h)
             ce = (ce * weights).mean(dim=1)

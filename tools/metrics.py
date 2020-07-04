@@ -77,13 +77,19 @@ class IOU(Metric):
 
     def _iou_weighted(self, output:torch.Tensor, target:torch.Tensor, weights:torch.Tensor):
         """
-        @param input: (N, H, W), or (N, H)
-        @param target: (N, H, W), or (N, H)
-        @param weights: (N, H, W), or (N, H)
+        @param input: (N, H)
+        @param target: (N, H)
+        @param weights: (N, H)
         @return mean_iou: scalar
         """
+        n = output.size(0)
         output = output.float()
         target = target.float()
+
+        weights = weights.float()
+        weights = weights.contiguous()
+        weights = weights.view(n, -1)  # (n, h)
+        weights = weights / weights.sum(1, keepdim=True) * float(weights.size(1))
 
         axis = [i for i in range(1, output.ndimension())]
         inter = torch.sum(output*target*weights, axis)
