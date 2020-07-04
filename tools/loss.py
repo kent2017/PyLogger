@@ -25,7 +25,7 @@ class Loss:
         target = target.long()
         target = target.contiguous()
         # target = target.view(n, 1, -1)      #(n, 1, h)
-        target_onehot = torch.zeros(output.shape).scatter_(dim=1, index=target, value=1)  #(n, c, h)
+        target_onehot = torch.zeros(output.shape).cuda().scatter_(dim=1, index=target, value=1)  #(n, c, h)
 
         if weights is None:
             ce = -(F.log_softmax(output, dim=1) * target_onehot).sum(dim=1)     #(n, h)
