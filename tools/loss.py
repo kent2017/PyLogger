@@ -22,7 +22,7 @@ class Loss:
         output = output.contiguous()
         output = output.view(n, c, -1)      #(n, c, h)
 
-        target = target.float()
+        target = target.long()
         target = target.contiguous()
         # target = target.view(n, 1, -1)      #(n, 1, h)
         target_onehot = torch.zeros(output.shape).scatter_(dim=1, index=target, value=1)  #(n, c, h)
