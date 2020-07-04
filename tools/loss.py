@@ -24,7 +24,7 @@ class Loss:
 
         target = target.long()
         target = target.contiguous()
-        # target = target.view(n, 1, -1)      #(n, 1, h)
+        target = target.view(n, 1, -1)      #(n, 1, h)
         target_onehot = torch.zeros(output.shape).cuda().scatter_(dim=1, index=target, value=1)  #(n, c, h)
 
         if weights is None:
