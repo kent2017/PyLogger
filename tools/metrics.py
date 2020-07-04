@@ -86,11 +86,11 @@ class IOU(Metric):
         output = output.float()
         target = target.float()
 
-        weights = weights.float()
-        weights = weights.contiguous()
-        weights = weights.view(n, -1)  # (n, h)
-        weights = weights / weights.sum(1, keepdim=True) * float(weights.size(1))
-
+        # weights = weights.float()
+        # weights = weights.contiguous()
+        # weights = weights.view(n, -1)  # (n, h)
+        # weights = weights / weights.sum(1, keepdim=True) * float(weights.size(1))
+        #
         axis = [i for i in range(1, output.ndimension())]
         inter = torch.sum(output*target*weights, axis)
         union = torch.sum((output+target)*weights, axis) - inter
