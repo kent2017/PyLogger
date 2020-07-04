@@ -7,6 +7,43 @@ class Loss:
     Tensor = torch.Tensor
 
     @staticmethod
+    def CrossEntropy(output, target, weights=None):
+        # type:(Tensor, Tensor, Tensor) -> Tensor
+        """
+        softmax inside this function!
+        @param output: (N, C, H, W), float
+        @param target: (N, H, W), long
+        @param weights: (N, H, W), float
+        @return loss: scalar
+        """
+        n = output.size(0)
+        c = output.size(1)
+
+        output = output.contiguous()
+        output = output.view(n, c, -1)      #(n, c, h)
+
+        target = target.float()
+        target = target.contiguous()
+        # target = target.view(n, 1, -1)      #(n, 1, h)
+        target_onehot = torch.zeros(output.shape).scatter_(dim=1, index=target, value=1)  #(n, c, h)
+
+        if weights is None:
+            ce = -(F.log_softmax(output, dim=1) * target_onehot).sum(dim=1)     #(n, h)
+            ce = ce.mean(dim=1)
+            loss = ce.mean()
+        else:
+            weights = weights.float()
+            weights = weights.contiguous()
+            weights = weights.view(n, -1)   #(n, h)
+
+            ce = -(F.log_softmax(output, dim=1) * target_onehot).sum(dim=1)     #(n, h)
+            ce = (ce * weights).mean(dim=1)
+            loss = ce.mean()
+
+        return loss
+
+
+    @staticmethod
     def JaccardLoss(output, target):
         # type:(Tensor, Tensor) -> Tensor
         """
