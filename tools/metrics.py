@@ -11,11 +11,12 @@ class IOU(Metric):
         super(IOU, self).__init__(is_accumulated=False)
         self.name = 'iou'
 
-    def forward(self, output:torch.Tensor, target:torch.Tensor):
+    def forward(self, output:torch.Tensor, target:torch.Tensor, weights:torch.Tensor=None):
         """
         @param input: (N, C, H, W), (N, C, H) or (N, C), where C = 1 or 2
         @param target: (N, C, H, W), (N, C, H) or (N, C), where C = 1 or 2
                     or (N, H, W),    (N, H)    or (N, )
+        @param weights: (N, H, W), or (N, H)
         @return mean_iou: scalar
         """
         n = output.size(0)
@@ -35,14 +36,18 @@ class IOU(Metric):
         elif len(output.shape) > 2:
             output = output.view(n, -1)
             target = target.view(n, -1)
-            return self._iou_image(output, target)
+
+            if weights is None:
+                return self._iou_image(output, target)
+            else:
+                return self._iou_weighted(output, target, weights)
         else:
             assert 0, "inapplicable"
 
     def _iou_image(self, output:torch.Tensor, target:torch.Tensor):
         """
-        @param input: (N, 1, H, W)
-        @param target: (N, 1, H, W)
+        @param input: (N, H, W)
+        @param target: (N, H, W)
         @return mean_iou: scalar
         """
         output = output.float()
@@ -69,6 +74,23 @@ class IOU(Metric):
 
         iou = (inter+_epsilon)/(union+_epsilon)
         return iou.item()
+
+    def _iou_weighted(self, output:torch.Tensor, target:torch.Tensor, weights:torch.Tensor):
+        """
+        @param input: (N, H, W), or (N, H)
+        @param target: (N, H, W), or (N, H)
+        @param weights: (N, H, W), or (N, H)
+        @return mean_iou: scalar
+        """
+        output = output.float()
+        target = target.float()
+
+        axis = [i for i in range(1, output.ndimension())]
+        inter = torch.sum(output*target*weights, axis)
+        union = torch.sum((output+target)*weights, axis) - inter
+
+        iou = (inter+_epsilon)/(union+_epsilon)     # (n, )
+        return iou.mean().item()
 
 
 class Accuracy(Metric):
