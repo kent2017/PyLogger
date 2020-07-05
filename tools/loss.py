@@ -45,8 +45,8 @@ class Loss:
 
 
     @staticmethod
-    def JaccardLoss(output, target):
-        # type:(Tensor, Tensor) -> Tensor
+    def JaccardLoss(output, target, weights=None):
+        # type:(Tensor, Tensor, Tensor) -> Tensor
         """
         Measures the criterion for classification.
         @param output: (N, C, H, W), float
@@ -79,8 +79,8 @@ class Loss:
 
 
     @staticmethod
-    def JaccardCrossEntropyLoss(output, target):
-        # type:(Tensor, Tensor) -> Tensor
+    def JaccardCrossEntropyLoss(output, target, weights=None):
+        # type:(Tensor, Tensor, Tensor) -> Tensor
         """
         Measures the criterion for classification.
         @param output: (N, C, H, W), float
@@ -97,8 +97,8 @@ class Loss:
 
 
     @staticmethod
-    def JaccardBCELossClass(output, target):
-        # type:(Tensor, Tensor) -> Tensor
+    def JaccardBCELossClass(output, target, weights=None):
+        # type:(Tensor, Tensor, Tensor) -> Tensor
         """
         Measures the criterion for classification.
         @param output: (N, 1)
@@ -124,8 +124,8 @@ class Loss:
         return loss
 
     @staticmethod
-    def JaccardBCELoss(output, target):
-        # type: (Tensor, Tensor) -> Tensor
+    def JaccardBCELoss(output, target, weights=None):
+        # type: (Tensor, Tensor, Tensor) -> Tensor
         """
         Measures the criterion -log(Jaccard Index) + BCELoss.
         @param output: (N, 1, W, H)
@@ -150,8 +150,8 @@ class Loss:
         return loss
 
     @staticmethod
-    def BCELoss(output, target):
-        # type: (Tensor, Tensor) -> Tensor
+    def BCELoss(output, target, weights=None):
+        # type: (Tensor, Tensor, Tensor) -> Tensor
         """
         A criterion that measures the binary cross entropy between the input and the target.
         @param output: shape (N, 1) or (N, 1, H, W)
