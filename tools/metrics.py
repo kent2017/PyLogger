@@ -105,7 +105,7 @@ class Accuracy(Metric):
         super(Accuracy, self).__init__(is_accumulated=False)
         self.name = 'acc'
 
-    def forward(self, output:torch.Tensor, target:torch.Tensor):
+    def forward(self, output:torch.Tensor, target:torch.Tensor, weights=None):
         """
         @param output: (N, C, H, W) or (N, C), where C>=1
         @param target: (N, C, H, W) or (N, C), where C>=1
@@ -157,7 +157,7 @@ class Recall(Metric):
         self.TP = 0
         self.P = 0
 
-    def forward(self, output:torch.Tensor, target:torch.Tensor):
+    def forward(self, output:torch.Tensor, target:torch.Tensor, weights=None):
         """
         @param output: (N, 1)
         @param target: (N, 1)
@@ -194,7 +194,7 @@ class Precision(Metric):
         self.TP = 0
         self.P0 = 0
 
-    def forward(self, output:torch.Tensor, target:torch.Tensor):
+    def forward(self, output:torch.Tensor, target:torch.Tensor, weights=None):
         """
         @param output: (N, 1)
         @param target: (N, 1)
