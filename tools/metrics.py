@@ -54,8 +54,8 @@ class IOU(Metric):
         target = target.float()
 
         axis = [i for i in range(1, output.ndimension())]
-        inter = torch.sum(output*target, axis)
-        union = torch.sum(output+target, axis) - inter
+        inter = torch.sum((output>0) & (output==target), axis)
+        union = torch.sum((output>0) | (target>0), axis)
 
         iou = (inter+_epsilon)/(union+_epsilon)     # (n, )
         return iou.mean().item()
@@ -92,8 +92,8 @@ class IOU(Metric):
         # weights = weights / weights.sum(1, keepdim=True) * float(weights.size(1))
         #
         axis = [i for i in range(1, output.ndimension())]
-        inter = torch.sum(output*target*weights, axis)
-        union = torch.sum((output+target)*weights, axis) - inter
+        inter = torch.sum(((output>0) & (output==target))*weights, axis)
+        union = torch.sum(((output>0) | (target>0))*weights, axis)
 
         iou = (inter+_epsilon)/(union+_epsilon)     # (n, )
         return iou.mean().item()
@@ -105,7 +105,7 @@ class Accuracy(Metric):
         super(Accuracy, self).__init__(is_accumulated=False)
         self.name = 'acc'
 
-    def forward(self, output:torch.Tensor, target:torch.Tensor, weights=None):
+    def forward(self, output:torch.Tensor, target:torch.Tensor):
         """
         @param output: (N, C, H, W) or (N, C), where C>=1
         @param target: (N, C, H, W) or (N, C), where C>=1
@@ -157,7 +157,7 @@ class Recall(Metric):
         self.TP = 0
         self.P = 0
 
-    def forward(self, output:torch.Tensor, target:torch.Tensor, weights=None):
+    def forward(self, output:torch.Tensor, target:torch.Tensor):
         """
         @param output: (N, 1)
         @param target: (N, 1)
@@ -194,7 +194,7 @@ class Precision(Metric):
         self.TP = 0
         self.P0 = 0
 
-    def forward(self, output:torch.Tensor, target:torch.Tensor, weights=None):
+    def forward(self, output:torch.Tensor, target:torch.Tensor):
         """
         @param output: (N, 1)
         @param target: (N, 1)
