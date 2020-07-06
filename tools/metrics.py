@@ -92,8 +92,8 @@ class IOU(Metric):
         # weights = weights / weights.sum(1, keepdim=True) * float(weights.size(1))
         #
         axis = [i for i in range(1, output.ndimension())]
-        inter = torch.sum(((output>0) & (output==target))*weights, axis)
-        union = torch.sum(((output>0) | (target>0))*weights, axis)
+        inter = torch.sum(((output>0) & (output==target)).float()*weights, axis)
+        union = torch.sum(((output>0) | (target>0)).float()*weights, axis)
 
         iou = (inter+_epsilon)/(union+_epsilon)     # (n, )
         return iou.mean().item()
