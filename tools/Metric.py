@@ -11,7 +11,7 @@ class Metric:
     def zero_values(self):
         pass
 
-    def forward(self, output, target):
+    def forward(self, output, target, weights):
         assert 0, "must implement this function!"
 
     @property
