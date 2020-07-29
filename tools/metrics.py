@@ -54,8 +54,8 @@ class IOU(Metric):
         target = target.float()
 
         axis = [i for i in range(1, output.ndimension())]
-        inter = torch.sum((output>0) & (output==target), axis)
-        union = torch.sum((output>0) | (target>0), axis)
+        inter = torch.sum((output>0) & (output==target), axis).float()
+        union = torch.sum((output>0) | (target>0), axis).float()
 
         iou = (inter+_epsilon)/(union+_epsilon)     # (n, )
         return iou.mean().item()
