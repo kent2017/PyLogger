@@ -170,11 +170,3 @@ class Loss:
         bce = -(target * torch.log(torch.clamp(output, _epsilon, 1.)) + (-target + 1.)*torch.log(torch.clamp(-output + 1., _epsilon, 1.))).mean(axis)    # (n,)
         loss = bce.mean()
         return loss
-
-
-if __name__ == "__main__":
-    output = torch.randint(0, 2, size=(5, 2)).float()
-    target = torch.randint(0, 2, size=(5, )).long()
-    res = Loss.JaccardCrossEntropyLossClass(output, target)
-    print(res)
-

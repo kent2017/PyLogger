@@ -213,14 +213,3 @@ class Precision(Metric):
 
         recall = (self.TP + _epsilon) / (self.P0 + _epsilon)
         return recall
-
-
-if __name__ == "__main__":
-    precision = Precision()
-    for i in range(3):
-        precision.zero_values()
-        for _ in range(5):
-            a = torch.randint(0, 2, (5, 1))
-            b = torch.randint(0, 2, (5, 1))
-            print(precision.forward(a, b))
-    pass
