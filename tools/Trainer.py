@@ -19,7 +19,6 @@ class BaseTrainer:
     A base class of trainer.
     @param loss_fn: the loss function, must be the static function the of Loss class
     @param metrics: list, a list of metrics which must be of the Metric class
-    @param log_dir: str, the logger directory, None by default.
     @param use_weights: bool, if use weights in the metrics.
     """
 
@@ -29,7 +28,6 @@ class BaseTrainer:
                  optimizer,
                  loss_fn,
                  metrics:list,
-                 log_dir,
                  use_weights=False,
                  lr_scheduler=None,
                  cuda=True):
@@ -39,7 +37,6 @@ class BaseTrainer:
         self.val_loader = val_loader
         self.loss_fn = loss_fn
         self.metrics = metrics
-        self.log_dir = log_dir
         self.use_weights = use_weights
         self.lr_scheduler = lr_scheduler
         self.cuda = cuda
@@ -47,9 +44,7 @@ class BaseTrainer:
         if self.cuda:
             self.model = self.model.cuda()
 
-        self.log_dir = os.path.join(self.log_dir, time.strftime("Log_%Y-%m-%d_%H-%M-%S"))
-
-    def train(self, epoches, start_epoch=0, val_epoches=1, print_epoch=1, write_summary_epoch=None, write_summary_steps=10):
+    def train(self, epoches, logger:Logger, start_epoch=0, val_epoches=1, print_epoch=1, write_summary_epoch=None, write_summary_steps=10):
         """
         Train the model for (end_epoch-start_epoch) epoches.
         @param epoches: the number of epoches throughout the training phase
@@ -62,8 +57,6 @@ class BaseTrainer:
         """
         if write_summary_epoch:
             write_summary_steps=None
-
-        logger = Logger(self.log_dir)      # records states, writes summary, and prints ..
 
         # global states
         logger.epoch = start_epoch
@@ -137,8 +130,7 @@ class BaseTrainer:
         self.on_train_end(logger)
 
     def test(self, logger:Logger):
-        Tensor = torch.cuda.FloatTensor if self.cuda else torch.FloatTensor
-        LongTensor = torch.cuda.LongTensor if self.cuda else torch.LongTensor
+        device = 'cuda' if self.cuda else 'cpu'
 
         self.model.eval()
         with torch.no_grad():
@@ -152,8 +144,8 @@ class BaseTrainer:
             # test
             for step, data in tqdm(enumerate(self.val_loader, 0)):
                 # 1.output
-                in_data = Tensor(data[0])
-                target = LongTensor(data[1])
+                in_data = data[0].to(device).float()
+                target = data[1].to(device).long()
                 out_data = self.model(in_data)
 
                 # 2. loss
@@ -161,7 +153,7 @@ class BaseTrainer:
                     weights = 1
                     val_loss = self.loss_fn(out_data, target, weights).item()
                 else:
-                    val_loss += self.loss_fn(out_data, target).item()
+                    val_loss = self.loss_fn(out_data, target).item()
 
                 logger.val_loss = val_loss
                 logger.val_loss_acc += (logger.val_loss - logger.val_loss_acc) / (step + 1.)
@@ -184,8 +176,7 @@ class BaseTrainer:
         """
         @param step: step in the current epoch
         """
-        Tensor = torch.cuda.FloatTensor if self.cuda else torch.FloatTensor
-        LongTensor = torch.cuda.LongTensor if self.cuda else torch.LongTensor
+        device = 'cuda' if self.cuda else 'cpu'
 
         self.model.train()
         self.optimizer.zero_grad()
@@ -193,8 +184,8 @@ class BaseTrainer:
         step = logger.step
 
         # 1). input and output
-        in_data = Tensor(data[0])
-        target = LongTensor(data[1])
+        in_data = data[0].to(device).float()
+        target = data[1].to(device).long()
 
         out_data = self.model(in_data)
 

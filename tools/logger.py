@@ -5,6 +5,7 @@ logger.py
 @date 2020/07/31
 """
 import os
+import  time
 from tensorboardX import SummaryWriter
 
 
@@ -14,10 +15,18 @@ class Logger:
     - lr, loss, metrics
 
     @param log_dir:
+    @param args: arguments to be saved
     """
-    def __init__(self, log_dir):
+    def __init__(self, log_dir, args=None):
+        log_dir = os.path.join(log_dir, time.strftime("Log_%Y-%m-%d_%H-%M-%S"))
+
         if not os.path.exists(log_dir):
             os.makedirs(log_dir)
+        self.log_dir = log_dir
+
+        # save
+        if args:
+            self._save_args(args)
 
         # states throughout the training phase
         self.epoch = 0              # current epoch
@@ -109,9 +118,9 @@ class Logger:
             metric_names = self.metric_names
             metric_values = self.metric_values_acc
 
-            self.writer.add_scalar('loss/train', self.loss_acc, self.step_acc)
+            self.writer.add_scalar('loss/train', self.loss_acc, self.step_acc+1)
             for name, v in zip(metric_names, metric_values):
-                self.writer.add_scalar('%s/train'%(name), v, self.step_acc)
+                self.writer.add_scalar('%s/train'%(name), v, self.step_acc+1)
         else:
             # test
             metric_names = ["val_%s"%name for name in self.metric_names]
@@ -126,3 +135,9 @@ class Logger:
             self.writer.add_scalar('params/lr', self.lr, epoch+1)
         else:
             pass
+
+    def _save_args(self, args):
+        import json
+        with open(os.path.join(self.log_dir, 'config.json'), 'w') as f:
+            s = json.dumps(vars(args), indent=2)
+            print(s, file=f)
