@@ -44,16 +44,24 @@ class BaseTrainer:
         if self.cuda:
             self.model = self.model.cuda()
 
-    def train(self, epoches, logger:Logger, start_epoch=0, val_epoches=1, print_epoch=1, write_summary_epoch=None, write_summary_steps=10):
+    def train(self, epoches,
+              logger:Logger,
+              start_epoch=0,
+              val_epoches=1,
+              print_epoch=1,
+              write_summary_epoch=None,
+              write_summary_steps=10,
+              save_weights_epoch=1):
         """
         Train the model for (end_epoch-start_epoch) epoches.
         @param epoches: the number of epoches throughout the training phase
         @param start_epoch: the start training epoch
-        @param val_epoches: the number of epoches after which the validation data are tested.
-        @param print_epoch: the number of epoches after which the logger prints logs
-        @param write_summary_epoch: the number of epoches after which the logger writes summary.
+        @param val_epoches: the number of epoches between two validatings.
+        @param print_epoch: the number of epoches between two printings
+        @param write_summary_epoch: the number of epoches between two summary writings.
                     If specified, this will override write_summary_steps.
-        @param write_summary_steps: the number of steps after which the logger wirtes summary, None by default.
+        @param write_summary_steps: the number of steps between two summary writings.
+        @param save_weights_epoch: the number of epoches between two weights savings
         """
         if write_summary_epoch:
             write_summary_steps=None
@@ -124,6 +132,12 @@ class BaseTrainer:
             if self.lr_scheduler:
                 for param_group in self.optimizer.param_groups:
                     param_group['lr'] = self.lr_scheduler(epoch+1, self.optimizer.defaults['lr'])
+
+            # 5. save weights
+            if epoch == epoches-1:
+                self.save(logger, optimizer=True)
+            elif (epoch+1)%save_weights_epoch == 0:
+                self.save(logger)
 
             self.on_epoch_end(logger)
 
@@ -246,3 +260,19 @@ class BaseTrainer:
 
     def on_test_batch_end(self, logger:Logger):
         pass
+
+    def save(self, logger:Logger, optimizer=False):
+        if optimizer:
+            fn = os.path.join(logger.log_dir, "optimizer.t7")
+            torch.save(self.optimizer.state_dict(), fn)
+
+        dir_checkpoints = os.path.join(logger.log_dir, 'checkpoints')
+        if not os.path.exists(dir_checkpoints):
+            os.mkdir(dir_checkpoints)
+        fn = os.path.join(dir_checkpoints, "%d_%s_%.4f.t7" % (logger.epoch, self.metrics[0].name, logger.val_metric_values_acc[0]))
+        torch.save(self.model.state_dict(), fn)
+
+    def load_optimizer(self, fn):
+        ck = torch.load(fn)
+        self.optimizer.load_state_dict(ck)
+        print("Load optimizer %s\n"%fn)

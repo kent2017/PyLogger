@@ -76,7 +76,7 @@ class Logger:
 
         # 1. print on screen
         log_str = ' ;'.join(["%s %.3f" % (name, v) for name, v in zip(metric_names, metric_values)])
-        log_str = 'epoch %d, step %d: loss %.3f; %s' % (epoch+1, step+1, self.loss_acc, log_str)
+        log_str = 'epoch %d, step %d: loss %.3f; %s' % (epoch, step, self.loss_acc, log_str)
 
         if tbar:
             tbar.set_description(log_str)
@@ -90,7 +90,7 @@ class Logger:
             self.first_write_training_file = False
 
         log_str = ' '.join(["%.3f"%v for v in metric_values])
-        log_str = '%d %d %.3f %s' % (epoch+1, step+1, self.loss_acc, log_str)
+        log_str = '%d %d %.3f %s' % (epoch, step, self.loss_acc, log_str)
         print(log_str, file=self.training_file)
 
     def print_val(self):
@@ -101,7 +101,7 @@ class Logger:
 
         # 1. print on screen
         log_str = ' ;'.join(["%s %.3f" % (name, v) for name, v in zip(metric_names, metric_values)])
-        log_str = 'epoch %d: val_loss %.3f; %s' % (epoch+1, self.val_loss_acc, log_str)
+        log_str = 'epoch %d: val_loss %.3f; %s' % (epoch, self.val_loss_acc, log_str)
         print(log_str)
 
         # 2. write to val file
@@ -110,29 +110,31 @@ class Logger:
             self.first_write_val_file = False
 
         log_str = ' '.join(["%.3f"%v for v in metric_values])
-        log_str = '%d %.3f %s' % (epoch+1, self.val_loss_acc, log_str)
-        print(log_str, file=self.val_file)
+        log_str = '%d %.3f %s' % (epoch, self.val_loss_acc, log_str)
+        print(log_str, file=self.val_file, flush=True)
 
     def write_summary_loss_metrics(self, train=True):
         if train:
             metric_names = self.metric_names
             metric_values = self.metric_values_acc
 
-            self.writer.add_scalar('loss/train', self.loss_acc, self.step_acc+1)
+            self.writer.add_scalar('loss/train', self.loss_acc, self.step_acc)
             for name, v in zip(metric_names, metric_values):
-                self.writer.add_scalar('%s/train'%(name), v, self.step_acc+1)
+                self.writer.add_scalar('%s/train'%(name), v, self.step_acc)
         else:
             # test
-            metric_names = ["val_%s"%name for name in self.metric_names]
+            metric_names = self.metric_names
             metric_values = self.val_metric_values_acc
+
+            self.writer.add_scalar('loss/test', self.val_loss_acc, self.epoch)
             for name, v in zip(metric_names, metric_values):
-                self.writer.add_scalar('%s/test'%(name), v, self.epoch+1)
+                self.writer.add_scalar('%s/test'%(name), v, self.epoch)
 
     def write_summary_params(self, train=True):
         epoch = self.epoch
 
         if train:
-            self.writer.add_scalar('params/lr', self.lr, epoch+1)
+            self.writer.add_scalar('params/lr', self.lr, epoch)
         else:
             pass
 
