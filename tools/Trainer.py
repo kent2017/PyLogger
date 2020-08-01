@@ -265,12 +265,15 @@ class BaseTrainer:
         if optimizer:
             fn = os.path.join(logger.log_dir, "optimizer.t7")
             torch.save(self.optimizer.state_dict(), fn)
+            print("Save optimizer to %s\n"%fn)
 
         dir_checkpoints = os.path.join(logger.log_dir, 'checkpoints')
         if not os.path.exists(dir_checkpoints):
             os.mkdir(dir_checkpoints)
+
         fn = os.path.join(dir_checkpoints, "%d_%s_%.4f.t7" % (logger.epoch, self.metrics[0].name, logger.val_metric_values_acc[0]))
         torch.save(self.model.state_dict(), fn)
+        print("Save model to %s\n" % fn)
 
     def load_optimizer(self, fn):
         ck = torch.load(fn)
