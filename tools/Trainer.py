@@ -105,7 +105,7 @@ class BaseTrainer:
                 self.in_train_batch(logger, data)
 
                 # print logs
-                if (epoch+1)%print_steps==0:
+                if (step+1)%print_steps==0:
                     logger.print_training(batch_bar, print_steps)
                 elif step == len(self.train_loader) -1:
                     logger.print_training(batch_bar, len(self.train_loader)%print_steps)
