@@ -48,7 +48,7 @@ class BaseTrainer:
               logger:Logger,
               start_epoch=0,
               val_epoches=1,
-              print_epoch=1,
+              print_steps=10,
               write_summary_epoch=None,
               write_summary_steps=10,
               save_weights_epoch=1):
@@ -57,7 +57,7 @@ class BaseTrainer:
         @param epoches: the number of epoches throughout the training phase
         @param start_epoch: the start training epoch
         @param val_epoches: the number of epoches between two validatings.
-        @param print_epoch: the number of epoches between two printings
+        @param print_steps: the number of steps between two printings
         @param write_summary_epoch: the number of epoches between two summary writings.
                     If specified, this will override write_summary_steps.
         @param write_summary_steps: the number of steps between two summary writings.
@@ -105,10 +105,10 @@ class BaseTrainer:
                 self.in_train_batch(logger, data)
 
                 # print logs
-                if (epoch+1)%print_epoch==0:
-                    logger.print_training(batch_bar, print_epoch)
+                if (epoch+1)%print_steps==0:
+                    logger.print_training(batch_bar, print_steps)
                 elif step == len(self.train_loader) -1:
-                    logger.print_training(batch_bar, len(self.train_loader)%print_epoch)
+                    logger.print_training(batch_bar, len(self.train_loader)%print_steps)
 
                 # write summary
                 if write_summary_steps and (logger.step_acc+1)%write_summary_steps==0:
