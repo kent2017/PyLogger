@@ -8,5 +8,6 @@ class LearningRateScheduler:
         @param n:
         """
         def update(epoch, lr):
+            # epoch >= 0
             return lr * factor**(epoch//n)
         return update

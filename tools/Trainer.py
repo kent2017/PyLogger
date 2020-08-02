@@ -77,6 +77,11 @@ class BaseTrainer:
 
         for epoch in range(start_epoch, epoches):
             # 1. epoch begin
+            #  lr scheduler
+            if self.lr_scheduler:
+                for param_group in self.optimizer.param_groups:
+                    param_group['lr'] = self.lr_scheduler(epoch, self.optimizer.defaults['lr'])     # epoch is from 0
+
             # epoch states
             logger.epoch = epoch
             logger.lr = self.optimizer.state_dict()['param_groups'][0]['lr']
@@ -128,12 +133,7 @@ class BaseTrainer:
                 logger.write_summary_loss_metrics(train=False)
                 print("")
 
-            # 4. lr scheduler
-            if self.lr_scheduler:
-                for param_group in self.optimizer.param_groups:
-                    param_group['lr'] = self.lr_scheduler(epoch+1, self.optimizer.defaults['lr'])
-
-            # 5. save weights
+            # 4. save weights
             if epoch == epoches-1:
                 self.save(logger, optimizer=True)
             elif (epoch+1)%save_weights_epoch == 0:
