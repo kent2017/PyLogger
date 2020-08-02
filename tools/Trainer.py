@@ -114,8 +114,8 @@ class BaseTrainer:
                 if write_summary_steps and (logger.step_acc+1)%write_summary_steps==0:
                     logger.write_summary_loss_metrics(train=True)
 
-                logger.step_acc += 1
                 self.on_train_batch_end(logger)       # customize
+                logger.step_acc += 1
 
             if write_summary_epoch and (epoch + 1) % write_summary_epoch == 0:
                 logger.write_summary_loss_metrics(train=True)
@@ -144,47 +144,25 @@ class BaseTrainer:
         self.on_train_end(logger)
 
     def test(self, logger:Logger):
-        device = 'cuda' if self.cuda else 'cpu'
+        self.on_test_begin(logger)
+
+        # zero values
+        logger.val_loss_acc = 0.
+        logger.val_metric_values = [0.] * len(self.metrics)
+        logger.val_metric_values_acc = [0.] * len(self.metrics)
+        for m in self.metrics:
+            m.zero_values()
 
         self.model.eval()
         with torch.no_grad():
-            # zero values
-            logger.val_loss_acc = 0.
-            logger.val_metric_values = [0.] * len(self.metrics)
-            logger.val_metric_values_acc = [0.] * len(self.metrics)
-            for m in self.metrics:
-                m.zero_values()
-
             # test
             for step, data in tqdm(enumerate(self.val_loader, 0)):
-                # 1.output
-                in_data = data[0].to(device).float()
-                target = data[1].to(device).long()
-                out_data = self.model(in_data)
+                logger.val_step = step
 
-                # 2. loss
-                if self.use_weights:
-                    weights = 1
-                    val_loss = self.loss_fn(out_data, target, weights).item()
-                else:
-                    val_loss = self.loss_fn(out_data, target).item()
-
-                logger.val_loss = val_loss
-                logger.val_loss_acc += (logger.val_loss - logger.val_loss_acc) / (step + 1.)
-
-                # 3. metrics
-                for j, metric in enumerate(self.metrics):
-                    if self.use_weights:
-                        weights = 1
-                        v = metric.forward(out_data, target, weights)
-                    else:
-                        v = metric.forward(out_data, target)
-
-                    logger.val_metric_values[j] = v
-                    if metric.accumulated:
-                        logger.val_metric_values_acc[j] = v
-                    else:
-                        logger.val_metric_values_acc[j] += (v - logger.val_metric_values_acc[j]) / (step + 1.)  # avg metric values
+                self.on_test_batch_begin(logger)
+                self.in_test_batch(logger, data)
+                self.on_test_batch_end(logger)
+        self.on_test_end(logger)
 
     def in_train_batch(self, logger:Logger, data):
         """
@@ -200,9 +178,11 @@ class BaseTrainer:
         # 1). input and output
         in_data = data[0].to(device).float()
         target = data[1].to(device).long()
+        info = data[2]
 
         out_data = self.model(in_data)
 
+        logger.batch_data_info = info
         # 2). loss
         if self.use_weights:
             weights = 1
@@ -230,6 +210,40 @@ class BaseTrainer:
         # 4). loss backward
         loss.backward()
         self.optimizer.step()
+
+    def in_test_batch(self, logger:Logger, data):
+        device = 'cuda' if self.cuda else 'cpu'
+        # 1.output
+        in_data = data[0].to(device).float()
+        target = data[1].to(device).long()
+        info = data[2]
+        out_data = self.model(in_data)
+
+        logger.batch_data_info = info
+
+        # 2. loss
+        if self.use_weights:
+            weights = 1
+            val_loss = self.loss_fn(out_data, target, weights).item()
+        else:
+            val_loss = self.loss_fn(out_data, target).item()
+
+        logger.val_loss = val_loss
+        logger.val_loss_acc += (logger.val_loss - logger.val_loss_acc) / (logger.val_step + 1.)
+
+        # 3. metrics
+        for j, metric in enumerate(self.metrics):
+            if self.use_weights:
+                weights = 1
+                v = metric.forward(out_data, target, weights)
+            else:
+                v = metric.forward(out_data, target)
+
+            logger.val_metric_values[j] = v
+            if metric.accumulated:
+                logger.val_metric_values_acc[j] = v
+            else:
+                logger.val_metric_values_acc[j] += (v - logger.val_metric_values_acc[j]) / (logger.val_step + 1.)  # avg metric values
 
     def on_train_begin(self, logger:Logger):
         pass

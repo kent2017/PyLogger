@@ -28,6 +28,9 @@ class Logger:
         if args:
             self._save_args(args)
 
+        # info
+        self.batch_data_info = None
+
         # states throughout the training phase
         self.epoch = 0              # current epoch
         self.total_epoches = 0      #
@@ -40,6 +43,7 @@ class Logger:
         self.loss_acc = 0.          # accumulated loss in the current epoch
         self.metric_values_acc = []
 
+        self.val_step = 0
         self.val_loss_acc = 0.          # val loss
         self.val_metric_values_acc = []
 
