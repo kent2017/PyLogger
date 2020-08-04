@@ -40,7 +40,7 @@ class LearningRateScheduler:
         @param stepsize: the number of steps in half a cycle
         """
         def update(step, lr):
-            cycle = math.floor(step//(2*stepsize))
+            cycle = step//(2*stepsize)
             x = step/stepsize - 2*cycle
             scale = 1/(2.**cycle)
             return base_lr + (max_lr - base_lr) * min(x, 2-x) * scale
