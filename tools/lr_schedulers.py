@@ -27,7 +27,7 @@ class LearningRateScheduler:
         return update
 
     @staticmethod
-    def TriangularCLR(epochsize, base_lr, max_lr):
+    def TriangularCLR(stepsize, base_lr, max_lr):
         """
         Triangular cyclical learning rate. the max_lr will decay by 0.5 after each cycle.
             /\
@@ -36,12 +36,12 @@ class LearningRateScheduler:
          /      \
          ----
           ||
-         epochsize
-        @param epochsize: the number of epoches in half a cycle
+         stepsize
+        @param stepsize: the number of steps in half a cycle
         """
-        def update(epoch, lr):
-            cycle = math.floor(epoch//(2*epochsize))
-            x = epoch/epochsize - 2*cycle
+        def update(step, lr):
+            cycle = math.floor(step//(2*stepsize))
+            x = step/stepsize - 2*cycle
             scale = 1/(2.**cycle)
             return base_lr + (max_lr - base_lr) * min(x, 2-x) * scale
         return update
