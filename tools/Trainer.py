@@ -28,7 +28,7 @@ class BaseTrainer:
                  optimizer,
                  loss_fn,
                  metrics:list,
-                 use_weights=False,
+                 use_weights:bool=False,
                  lr_scheduler=None,
                  cuda=True):
         self.model = model
