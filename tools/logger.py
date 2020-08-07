@@ -143,7 +143,10 @@ class Logger:
             pass
 
     def _save_args(self, args):
+        import platform
         import json
         with open(os.path.join(self.log_dir, 'config.json'), 'w') as f:
-            s = json.dumps(vars(args), indent=2)
+            config = vars(args)
+            config['platform'] = platform.node()
+            s = json.dumps(config, indent=2)
             print(s, file=f)
