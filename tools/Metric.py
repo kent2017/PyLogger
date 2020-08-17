@@ -8,6 +8,9 @@ class Metric:
     def __init__(self, is_accumulated:bool):
         self.is_accumulated = is_accumulated
 
+    def __call__(self, *args, **kwargs):
+        self.forward(*args, **kwargs)
+
     def zero_values(self):
         pass
 

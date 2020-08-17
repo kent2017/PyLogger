@@ -196,9 +196,9 @@ class BaseTrainer:
         for j, metric in enumerate(self.metrics):
             if self.use_weights:
                 weights = 1     # customize
-                v = metric.forward(out_data, target, weights)
+                v = metric(out_data, target, weights)
             else:
-                v = metric.forward(out_data, target)
+                v = metric(out_data, target)
 
             logger.metric_values[j] = v
             if metric.accumulated:
@@ -234,9 +234,9 @@ class BaseTrainer:
         for j, metric in enumerate(self.metrics):
             if self.use_weights:
                 weights = 1
-                v = metric.forward(out_data, target, weights)
+                v = metric(out_data, target, weights)
             else:
-                v = metric.forward(out_data, target)
+                v = metric(out_data, target)
 
             logger.val_metric_values[j] = v
             if metric.accumulated:
