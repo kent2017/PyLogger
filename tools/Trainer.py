@@ -17,7 +17,7 @@ from .logger import Logger
 class BaseTrainer:
     """
     A base class of trainer.
-    @param loss_fn: the loss function, must be the static function the of Loss class
+    @param loss_fns: list, a list of loss functions, must be the static function the of Loss class
     @param metrics: list, a list of metrics which must be of the Metric class
     @param use_weights: bool, if use weights in the metrics.
     """
@@ -26,7 +26,7 @@ class BaseTrainer:
                  train_loader:DataLoader,
                  val_loader:DataLoader,
                  optimizer,
-                 loss_fn,
+                 loss_fns:list,
                  metrics:list,
                  use_weights:bool=False,
                  lr_scheduler=None,
@@ -35,7 +35,7 @@ class BaseTrainer:
         self.optimizer = optimizer
         self.train_loader = train_loader
         self.val_loader = val_loader
-        self.loss_fn = loss_fn
+        self.loss_fns = loss_fns
         self.metrics = metrics
         self.use_weights = use_weights
         self.lr_scheduler = lr_scheduler
@@ -71,6 +71,7 @@ class BaseTrainer:
         logger.total_epoches = epoches
         logger.step_acc = 0
         logger.metric_names = [m.name for m in self.metrics]
+        if len(self.loss_fns)>1: logger.loss_names = [fn.name for fn in self.loss_fns]
         self.lr = self.optimizer.defaults['lr']
 
         self.on_train_begin(logger)       # customize
@@ -84,6 +85,7 @@ class BaseTrainer:
             logger.loss_acc = 0.
             logger.metric_values_acc = [0.]*len(self.metrics)
             logger.metric_values = [0.]*len(self.metrics)
+            logger.losses = [0.]*len(logger.loss_names)
 
             logger.write_summary_params(True)
 
@@ -149,6 +151,7 @@ class BaseTrainer:
         logger.val_loss_acc = 0.
         logger.val_metric_values = [0.] * len(self.metrics)
         logger.val_metric_values_acc = [0.] * len(self.metrics)
+        logger.val_losses = [0.] * len(logger.loss_names)
         for m in self.metrics:
             m.zero_values()
 
@@ -183,11 +186,15 @@ class BaseTrainer:
 
         logger.batch_data_info = info
         # 2). loss
-        if self.use_weights:
-            weights = 1
-            loss = self.loss_fn(out_data, target, weights)
-        else:
-            loss = self.loss_fn(out_data, target)
+        weights = None if not self.use_weights else 1
+        loss = self.loss_fns[0](out_data, target, weights)
+        if len(self.loss_fns)>1:
+            # multiple losses
+            logger.losses[0] = loss.item()
+            for i in range(1, len(self.loss_fns)):
+                _l = self.loss_fns[i](out_data, target, weights)
+                loss += _l
+                logger.losses[i] = _l.item()
 
         logger.loss = loss.item()
         logger.loss_acc += (loss.item()-logger.loss_acc) / (step+1.)
@@ -221,11 +228,15 @@ class BaseTrainer:
         logger.batch_data_info = info
 
         # 2. loss
-        if self.use_weights:
-            weights = 1
-            val_loss = self.loss_fn(out_data, target, weights).item()
-        else:
-            val_loss = self.loss_fn(out_data, target).item()
+        weights = None if not self.use_weights else 1
+        val_loss = self.loss_fns[0](out_data, target, weights).item()
+        if len(self.loss_fns)>1:
+            # multiple losses
+            logger.val_losses[0] = val_loss
+            for i in range(1, len(self.loss_fns)):
+                _l = self.loss_fns[i](out_data, target, weights).item()
+                val_loss += _l
+                logger.val_losses[i] = _l
 
         logger.val_loss = val_loss
         logger.val_loss_acc += (logger.val_loss - logger.val_loss_acc) / (logger.val_step + 1.)

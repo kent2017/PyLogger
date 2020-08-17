@@ -5,7 +5,7 @@ logger.py
 @date 2020/07/31
 """
 import os
-import  time
+import time
 from tensorboardX import SummaryWriter
 
 
@@ -37,14 +37,17 @@ class Logger:
         self.step_acc = 0           # accumulated steps since the first epoch, will be added by one at the end of each step
         self.lr = 0.
         self.metric_names = []
+        self.loss_names = []        # names of losses
 
         # states in the current epoch
         self.step = 0               # step in the current epoch
-        self.loss_acc = 0.          # accumulated loss in the current epoch
+        self.loss_acc = 0.          # accumulated total loss in the current epoch
+        self.losses = []            # values of losses
         self.metric_values_acc = []
 
         self.val_step = 0
         self.val_loss_acc = 0.          # val loss
+        self.val_losses = []
         self.val_metric_values_acc = []
 
         # states in the current step
@@ -75,11 +78,11 @@ class Logger:
         epoch = self.epoch
         step = self.step
 
-        metric_names = self.metric_names
-        metric_values = self.metric_values_acc
+        names = [*self.metric_names, *self.loss_names]
+        values = [*self.metric_values_acc, *self.losses]
 
         # 1. print on screen
-        log_str = ' ;'.join(["%s %.3f" % (name, v) for name, v in zip(metric_names, metric_values)])
+        log_str = '; '.join(["%s %.3f" % (name, v) for name, v in zip(names, values)])
         log_str = 'epoch %d, step %d: loss %.3f; %s' % (epoch, step, self.loss_acc, log_str)
 
         if tbar:
@@ -90,30 +93,30 @@ class Logger:
 
         # 2. write to training file
         if self.first_write_training_file:
-            print("epoch step loss %s"%(" ".join(metric_names)), file=self.training_file)
+            print("epoch step loss %s"%(" ".join(names)), file=self.training_file)
             self.first_write_training_file = False
 
-        log_str = ' '.join(["%.3f"%v for v in metric_values])
+        log_str = ' '.join(["%.3f" % v for v in values])
         log_str = '%d %d %.3f %s' % (epoch, step, self.loss_acc, log_str)
         print(log_str, file=self.training_file)
 
     def print_val(self):
         epoch = self.epoch
 
-        metric_names = ["val_%s"%name for name in self.metric_names]
-        metric_values = self.val_metric_values_acc
+        names = [*["val_%s"%name for name in self.metric_names], *["val_%s"%name for name in self.loss_names]]
+        values = [*self.val_metric_values_acc, *self.val_losses]
 
         # 1. print on screen
-        log_str = ' ;'.join(["%s %.3f" % (name, v) for name, v in zip(metric_names, metric_values)])
+        log_str = '; '.join(["%s %.3f" % (name, v) for name, v in zip(names, values)])
         log_str = 'epoch %d: val_loss %.3f; %s' % (epoch, self.val_loss_acc, log_str)
         print(log_str)
 
         # 2. write to val file
         if self.first_write_val_file:
-            print("epoch val_loss %s"%(" ".join(metric_names)), file=self.val_file)
+            print("epoch val_loss %s"%(" ".join(names)), file=self.val_file)
             self.first_write_val_file = False
 
-        log_str = ' '.join(["%.3f"%v for v in metric_values])
+        log_str = ' '.join(["%.3f" % v for v in values])
         log_str = '%d %.3f %s' % (epoch, self.val_loss_acc, log_str)
         print(log_str, file=self.val_file, flush=True)
 
