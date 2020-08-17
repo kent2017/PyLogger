@@ -78,8 +78,8 @@ class Logger:
         epoch = self.epoch
         step = self.step
 
-        names = [*self.metric_names, *self.loss_names]
-        values = [*self.metric_values_acc, *self.losses]
+        names = [*self.loss_names, *self.metric_names]
+        values = [*self.losses, *self.metric_values_acc]
 
         # 1. print on screen
         log_str = '; '.join(["%s %.3f" % (name, v) for name, v in zip(names, values)])
@@ -103,8 +103,8 @@ class Logger:
     def print_val(self):
         epoch = self.epoch
 
-        names = [*["val_%s"%name for name in self.metric_names], *["val_%s"%name for name in self.loss_names]]
-        values = [*self.val_metric_values_acc, *self.val_losses]
+        names = [*["val_%s"%name for name in self.loss_names], *["val_%s"%name for name in self.metric_names]]
+        values = [*self.val_losses, *self.val_metric_values_acc]
 
         # 1. print on screen
         log_str = '; '.join(["%s %.3f" % (name, v) for name, v in zip(names, values)])
