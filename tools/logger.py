@@ -82,8 +82,8 @@ class Logger:
         values = [*self.losses, *self.metric_values_acc]
 
         # 1. print on screen
-        log_str = '; '.join(["%s %.3f" % (name, v) for name, v in zip(names, values)])
-        log_str = 'epoch %d, step %d: loss %.3f; %s' % (epoch, step, self.loss_acc, log_str)
+        log_str = '; '.join(["%s %.4f" % (name, v) for name, v in zip(names, values)])
+        log_str = 'epoch %d, step %d: loss %.4f; %s' % (epoch, step, self.loss_acc, log_str)
 
         if tbar:
             tbar.set_description(log_str)
@@ -96,8 +96,8 @@ class Logger:
             print("epoch step loss %s"%(" ".join(names)), file=self.training_file)
             self.first_write_training_file = False
 
-        log_str = ' '.join(["%.3f" % v for v in values])
-        log_str = '%d %d %.3f %s' % (epoch, step, self.loss_acc, log_str)
+        log_str = ' '.join(["%.4f" % v for v in values])
+        log_str = '%d %d %.4f %s' % (epoch, step, self.loss_acc, log_str)
         print(log_str, file=self.training_file)
 
     def print_val(self):
@@ -107,8 +107,8 @@ class Logger:
         values = [*self.val_losses, *self.val_metric_values_acc]
 
         # 1. print on screen
-        log_str = '; '.join(["%s %.3f" % (name, v) for name, v in zip(names, values)])
-        log_str = 'epoch %d: val_loss %.3f; %s' % (epoch, self.val_loss_acc, log_str)
+        log_str = '; '.join(["%s %.4f" % (name, v) for name, v in zip(names, values)])
+        log_str = 'epoch %d: val_loss %.4f; %s' % (epoch, self.val_loss_acc, log_str)
         print(log_str)
 
         # 2. write to val file
@@ -116,8 +116,8 @@ class Logger:
             print("epoch val_loss %s"%(" ".join(names)), file=self.val_file)
             self.first_write_val_file = False
 
-        log_str = ' '.join(["%.3f" % v for v in values])
-        log_str = '%d %.3f %s' % (epoch, self.val_loss_acc, log_str)
+        log_str = ' '.join(["%.4f" % v for v in values])
+        log_str = '%d %.4f %s' % (epoch, self.val_loss_acc, log_str)
         print(log_str, file=self.val_file, flush=True)
 
     def write_summary_loss_metrics(self, train=True):
