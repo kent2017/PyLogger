@@ -20,10 +20,6 @@ class Logger:
     def __init__(self, log_dir, args=None):
         self.log_dir = log_dir
 
-        # save
-        if args:
-            self._save_args(args)
-
         # info
         self.batch_data_info = None
 
@@ -55,16 +51,12 @@ class Logger:
 
         # files
         self.writer = SummaryWriter(log_dir)
-        self.training_file = open(os.path.join(log_dir, "training.txt"), 'w')
+        self.log_file = open(os.path.join(log_dir, "log.txt"), 'w')
         self.val_file = open(os.path.join(log_dir, "val.txt"), 'w')
-
-        # file states
-        self.first_write_training_file = True
-        self.first_write_val_file = True
 
     def __del__(self):
         self.writer.close()
-        self.training_file.close()
+        self.log_file.close()
         self.val_file.close()
 
     def print_training(self, tbar=None, tbar_update=1):
@@ -77,24 +69,15 @@ class Logger:
         names = [*self.loss_names, *self.metric_names]
         values = [*self.losses, *self.metric_values_acc]
 
-        # 1. print on screen
         log_str = '; '.join(["%s %.4f" % (name, v) for name, v in zip(names, values)])
         log_str = 'epoch %d, step %d: loss %.4f; %s' % (epoch, step, self.loss_acc, log_str)
 
         if tbar:
             tbar.set_description(log_str)
             tbar.update(tbar_update)
+            print(log_str, file=self.log_file)
         else:
             print(log_str)
-
-        # 2. write to training file
-        if self.first_write_training_file:
-            print("epoch step loss %s"%(" ".join(names)), file=self.training_file)
-            self.first_write_training_file = False
-
-        log_str = ' '.join(["%.4f" % v for v in values])
-        log_str = '%d %d %.4f %s' % (epoch, step, self.loss_acc, log_str)
-        print(log_str, file=self.training_file)
 
     def print_val(self):
         epoch = self.epoch
@@ -102,19 +85,10 @@ class Logger:
         names = [*["val_%s"%name for name in self.loss_names], *["val_%s"%name for name in self.metric_names]]
         values = [*self.val_losses, *self.val_metric_values_acc]
 
-        # 1. print on screen
         log_str = '; '.join(["%s %.4f" % (name, v) for name, v in zip(names, values)])
         log_str = 'epoch %d: val_loss %.4f; %s' % (epoch, self.val_loss_acc, log_str)
-        print(log_str)
-
-        # 2. write to val file
-        if self.first_write_val_file:
-            print("epoch val_loss %s"%(" ".join(names)), file=self.val_file)
-            self.first_write_val_file = False
-
-        log_str = ' '.join(["%.4f" % v for v in values])
-        log_str = '%d %.4f %s' % (epoch, self.val_loss_acc, log_str)
-        print(log_str, file=self.val_file, flush=True)
+        self.log(log_str)
+        print(log_str, file=self.val_file)
 
     def write_summary_loss_metrics(self, train=True):
         if train:
@@ -149,3 +123,7 @@ class Logger:
             config['platform'] = platform.node()
             s = json.dumps(config, indent=2)
             print(s, file=f)
+
+    def log(self, message:str):
+        print(message)
+        print(message, file=self.log_file, flush=True)
