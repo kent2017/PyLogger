@@ -18,10 +18,6 @@ class Logger:
     @param args: arguments to be saved
     """
     def __init__(self, log_dir, args=None):
-        log_dir = os.path.join(log_dir, time.strftime("Log_%Y-%m-%d_%H-%M-%S"))
-
-        if not os.path.exists(log_dir):
-            os.makedirs(log_dir)
         self.log_dir = log_dir
 
         # save
