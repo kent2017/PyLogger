@@ -88,7 +88,7 @@ class Logger:
         log_str = '; '.join(["%s %.4f" % (name, v) for name, v in zip(names, values)])
         log_str = 'epoch %d: val_loss %.4f; %s' % (epoch, self.val_loss_acc, log_str)
         self.log(log_str)
-        print(log_str, file=self.val_file)
+        print(log_str, file=self.val_file, flush=True)
 
     def write_summary_loss_metrics(self, train=True):
         if train:
