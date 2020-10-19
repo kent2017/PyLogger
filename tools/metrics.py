@@ -178,11 +178,10 @@ class Precision(Metric):
         @param target: (N, 1)
         @return recall: scalar
         """
-        assert len(output.shape)==2 and len(target.shape)==2
-        assert output.shape[1] == 1 and target.shape[1] == 1
-
-        output = (output>0.5).int()
-        target = (target>0.5).int()
+        n = output.size()[0]
+        output = output.argmax(1, keepdim=True)
+        output = output.view(n, -1)
+        target = target.view(n, -1)
 
         TP = (output & target).sum().item()
         P0 = output.sum().item()
