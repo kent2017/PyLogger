@@ -111,34 +111,13 @@ class Accuracy(Metric):
         @param target: (N, C, H, W) or (N, C), where C>=1
         @return mean_acc: scalar
         """
-        assert torch.all((output>=0.) & (output <=1.)), "input value must be in [0., 1.]"
-        assert torch.all((target>=0.) & (target<=1.)), "target value must be in [0., 1.]"
+        n = output.size()[0]
+        output = output.argmax(1, keepdim=True)
+        output = output.view(n, -1)
+        target = target.view(n, -1)
 
-        if output.shape[1] == 1:
-            return self._binary_acc(output, target)
-        else:
-            return self._multi_acc(output, target)
-
-    def _binary_acc(self, output:torch.Tensor, target:torch.Tensor):
-        """
-        @param output: (N, 1, H, W) or (N, 1)
-        @param target: (N, 1, H, W) or (N, 1)
-        @return mean_acc: scalar
-        """
-        output = (output>0.5).int()
-        target = (target>0.5).int()
-
-        axis = [i for i in range(1, output.ndimension())]
-        acc = torch.mean(output == target, dtype=torch.float, dim=axis)     #(n, )
+        acc = torch.mean(output==target, dtype=torch.float, dim=1)
         return acc.mean().item()
-
-    def _multi_acc(self, output:torch.Tensor, target:torch.Tensor):
-        """
-        @param output: (N, C, H, W) or (N, C), where C>1
-        @param target: (N, C, H, W) or (N, C)
-        @return mean_acc: scalar
-        """
-        assert 0, "not implemented"
 
 
 class Recall(Metric):
@@ -163,11 +142,10 @@ class Recall(Metric):
         @param target: (N, 1)
         @return recall: scalar
         """
-        assert len(output.shape)==2 and len(target.shape)==2
-        assert output.shape[1] == 1 and target.shape[1] == 1
-
-        output = (output>0.5).int()
-        target = (target>0.5).int()
+        n = output.size()[0]
+        output = output.argmax(1, keepdim=True)
+        output = output.view(n, -1)
+        target = target.view(n, -1)
 
         TP = (output & target).sum().item()
         P = target.sum().item()
