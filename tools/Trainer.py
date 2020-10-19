@@ -19,16 +19,14 @@ class BaseTrainer:
     A base class of trainer.
     @param loss_fns: list, a list of loss functions, must be the static function the of Loss class
     @param metrics: list, a list of metrics which must be of the Metric class
-    @param use_weights: bool, if use weights in the metrics.
     """
 
     def __init__(self, model:nn.Module,
                  train_loader:DataLoader,
                  val_loader:DataLoader,
                  optimizer,
-                 loss_fns:list,
+                 loss_fns:dict,
                  metrics:list,
-                 use_weights:bool=False,
                  lr_scheduler=None,
                  cuda=True):
         self.model = model
@@ -37,7 +35,6 @@ class BaseTrainer:
         self.val_loader = val_loader
         self.loss_fns = loss_fns
         self.metrics = metrics
-        self.use_weights = use_weights
         self.lr_scheduler = lr_scheduler
         self.cuda = cuda
 
@@ -71,7 +68,7 @@ class BaseTrainer:
         logger.total_epoches = epoches
         logger.step_acc = 0
         logger.metric_names = [m.name for m in self.metrics]
-        if len(self.loss_fns)>1: logger.loss_names = [fn.name for fn in self.loss_fns]
+        logger.loss_names = self.loss_fns.keys()
         self.lr = self.optimizer.defaults['lr']
 
         self.on_train_begin(logger)       # customize
@@ -166,7 +163,7 @@ class BaseTrainer:
                 self.on_test_batch_end(logger)
         self.on_test_end(logger)
 
-    def in_train_batch(self, logger:Logger, data):
+    def in_train_batch(self, logger:Logger, data:dict):
         """
         @param step: step in the current epoch
         """
@@ -178,34 +175,35 @@ class BaseTrainer:
         step = logger.step
 
         # 1). input and output
-        in_data = data[0].to(device).float()
-        target = data[1].to(device).long()
-        info = data[2]
+        if isinstance(data['x'], list):
+            for i in range(len(data['x'])):
+                if isinstance(data['x'][i], torch.Tensor):
+                    data['x'][i] = data['x'][i].to(device)
+        else:
+            data['x'] = data['x'].to(device)
 
-        out_data = self.model(in_data)
+        if isinstance(data['y'], list):
+            for i in range(len(data['y'])):
+                if isinstance(data['y'][i], torch.Tensor):
+                    data['y'][i] = data['y'][i].to(device)
+        else:
+            data['y'] = data['y'].to(device)
 
-        logger.batch_data_info = info
+        out_data = self.model(data['x'])
+
         # 2). loss
-        weights = None if not self.use_weights else 1
-        loss = self.loss_fns[0](out_data, target, weights)
-        if len(self.loss_fns)>1:
-            # multiple losses
-            logger.losses[0] = loss.item()
-            for i in range(1, len(self.loss_fns)):
-                _l = self.loss_fns[i](out_data, target, weights)
-                loss += _l
-                logger.losses[i] = _l.item()
+        loss = 0.
+        for i, fn in enumerate(self.loss_fns.values()):
+            _l = fn(out_data, data['y'])
+            loss = _l + loss
+            logger.losses[i] = _l.item()
 
         logger.loss = loss.item()
         logger.loss_acc += (loss.item()-logger.loss_acc) / (step+1.)
 
         # 3). metrics
         for j, metric in enumerate(self.metrics):
-            if self.use_weights:
-                weights = 1     # customize
-                v = metric(out_data, target, weights)
-            else:
-                v = metric(out_data, target)
+            v = metric(out_data, data['y'])
 
             logger.metric_values[j] = v
             if metric.accumulated:
@@ -220,34 +218,35 @@ class BaseTrainer:
     def in_test_batch(self, logger:Logger, data):
         device = 'cuda' if self.cuda else 'cpu'
         # 1.output
-        in_data = data[0].to(device).float()
-        target = data[1].to(device).long()
-        info = data[2]
-        out_data = self.model(in_data)
+        if isinstance(data['x'], list):
+            for i in range(len(data['x'])):
+                if isinstance(data['x'][i], torch.Tensor):
+                    data['x'][i] = data['x'][i].to(device)
+        else:
+            data['x'] = data['x'].to(device)
 
-        logger.batch_data_info = info
+        if isinstance(data['y'], list):
+            for i in range(len(data['y'])):
+                if isinstance(data['y'][i], torch.Tensor):
+                    data['y'][i] = data['y'][i].to(device)
+        else:
+            data['y'] = data['y'].to(device)
+
+        out_data = self.model(data['x'])
 
         # 2. loss
-        weights = None if not self.use_weights else 1
-        val_loss = self.loss_fns[0](out_data, target, weights).item()
-        if len(self.loss_fns)>1:
-            # multiple losses
-            logger.val_losses[0] = val_loss
-            for i in range(1, len(self.loss_fns)):
-                _l = self.loss_fns[i](out_data, target, weights).item()
-                val_loss += _l
-                logger.val_losses[i] = _l
+        val_loss = 0.
+        for i, fn in enumerate(self.loss_fns.values()):
+            _l = fn(out_data, data['y'])
+            val_loss = _l + val_loss
+            logger.val_losses[i] = _l.item()
 
-        logger.val_loss = val_loss
+        logger.val_loss = val_loss.item()
         logger.val_loss_acc += (logger.val_loss - logger.val_loss_acc) / (logger.val_step + 1.)
 
         # 3. metrics
         for j, metric in enumerate(self.metrics):
-            if self.use_weights:
-                weights = 1
-                v = metric(out_data, target, weights)
-            else:
-                v = metric(out_data, target)
+            v = metric(out_data, data['y'])
 
             logger.val_metric_values[j] = v
             if metric.accumulated:
