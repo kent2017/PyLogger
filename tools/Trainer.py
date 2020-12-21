@@ -294,11 +294,8 @@ class BaseTrainer:
         if not os.path.exists(dir_checkpoints):
             os.mkdir(dir_checkpoints)
 
-        if len(self.metrics) > 0:
-            fn = os.path.join(dir_checkpoints, "%d_%s_%.4f.t7" % (logger.epoch, self.metrics[0].name, logger.val_metric_values_acc[0]))
-        else:
-            fn = os.path.join(dir_checkpoints, "%d_%s_%.4f.t7" % (logger.epoch, 'loss', logger.val_loss_acc))
         # save
+        fn = os.path.join(dir_checkpoints, "%d_%s_%.4f.t7" % (logger.epoch, 'loss', logger.val_loss_acc))
         if isinstance(self.model, nn.DataParallel):
             torch.save(self.model.module.state_dict(), fn)
         else:
