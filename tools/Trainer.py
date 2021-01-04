@@ -170,7 +170,7 @@ class BaseTrainer:
                 self.on_test_batch_end(logger)
         self.on_test_end(logger)
 
-    def in_train_batch(self, logger:Logger, data:dict):
+    def in_train_batch(self, logger:Logger, data):
         """
         @param step: step in the current epoch
         """
