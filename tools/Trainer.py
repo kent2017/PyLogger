@@ -77,7 +77,7 @@ class BaseTrainer:
             # 1. epoch begin
             # epoch states
             now = time.strftime("%c")
-            logger.log('\n================ Training Loss (%s) ================' % now)
+            logger.log('================ Training Loss (%s) ================' % now)
 
             logger.epoch = epoch + 1
             logger.lr = self.optimizer.state_dict()['param_groups'][0]['lr']
