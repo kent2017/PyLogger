@@ -25,7 +25,7 @@ class Logger:
 
         # states throughout the training phase
         self.epoch = 0              # current epoch
-        self.total_epoches = 0      #
+        self.total_epochs = 0      #
         self.step_acc = 0           # accumulated steps since the first epoch, will be added by one at the end of each step
         self.lr = 0.
         self.metric_names = []
@@ -49,6 +49,9 @@ class Logger:
         self.val_loss = 0.
         self.val_metric_values = []
 
+        self.runtime = 0.       # the runtime of one-step training
+        self.data_time = 0.     # the runtime of one-step data loading
+
         # files
         self.writer = SummaryWriter(log_dir)
         self.log_file = open(os.path.join(log_dir, "log.txt"), 'w')
@@ -70,7 +73,8 @@ class Logger:
         values = [*self.losses, *self.metric_values_acc]
 
         log_str = '; '.join(["%s %.4f" % (name, v) for name, v in zip(names, values)])
-        log_str = 'epoch %d, step %d: loss %.4f; %s' % (epoch, step, self.loss_acc, log_str)
+        log_str = 'epoch %d, step %d: time %.3f; data %.3f; loss %.4f; %s' % \
+                  (epoch, step, self.runtime, self.data_time, self.loss_acc, log_str)
 
         if tbar:
             tbar.set_description(log_str)

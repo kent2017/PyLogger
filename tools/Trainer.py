@@ -26,7 +26,7 @@ class BaseTrainer:
                  val_loader:DataLoader,
                  optimizer,
                  loss_fns:dict,
-                 metrics:list,
+                 metrics:list=[],
                  lr_scheduler=None,
                  cuda=True):
         self.model = model
@@ -41,31 +41,31 @@ class BaseTrainer:
         if self.cuda:
             self.model = self.model.cuda()
 
-    def train(self, epoches,
+    def train(self, epochs,
               logger:Logger,
               start_epoch=0,
-              val_epoches=1,
+              val_epochs=1,
               print_steps=10,
               write_summary_epoch=None,
               write_summary_steps=10,
               save_weights_epoch=1):
         """
-        Train the model for (end_epoch-start_epoch) epoches.
-        @param epoches: the number of epoches throughout the training phase
+        Train the model for (end_epoch-start_epoch) epochs.
+        @param epochs: the number of epochs throughout the training phase
         @param start_epoch: the start training epoch
-        @param val_epoches: the number of epoches between two validatings.
-        @param print_steps: the number of steps between two printings
-        @param write_summary_epoch: the number of epoches between two summary writings.
+        @param val_epochs: the interval (epochs) between two validatings.
+        @param print_steps: the interval (steps) between two printings
+        @param write_summary_epoch: the interval (epochs) between two summary writings.
                     If specified, this will override write_summary_steps.
-        @param write_summary_steps: the number of steps between two summary writings.
-        @param save_weights_epoch: the number of epoches between two weights savings
+        @param write_summary_steps: the interval (steps) between two summary writings.
+        @param save_weights_epoch: the interval (epochs) between two weights savings
         """
         if write_summary_epoch:
             write_summary_steps=None
 
         # global states
         logger.epoch = start_epoch
-        logger.total_epoches = epoches
+        logger.total_epochs = epochs
         logger.step_acc = 0
         logger.metric_names = [m.name for m in self.metrics]
         logger.loss_names = self.loss_fns.keys()
@@ -73,10 +73,13 @@ class BaseTrainer:
 
         self.on_train_begin(logger)       # customize
 
-        for epoch in range(start_epoch, epoches):
+        for epoch in range(start_epoch, epochs):
             # 1. epoch begin
             # epoch states
-            logger.epoch = epoch
+            now = time.strftime("%c")
+            logger.log('\n================ Training Loss (%s) ================' % now)
+
+            logger.epoch = epoch + 1
             logger.lr = self.optimizer.state_dict()['param_groups'][0]['lr']
             logger.step = 0
             logger.loss_acc = 0.
@@ -95,7 +98,9 @@ class BaseTrainer:
             batch_bar = tqdm(range(len(self.train_loader)))
 
             # 2. train in batches
+            step_data_time = time.time()
             for step, data in enumerate(self.train_loader):
+                step_start_time = time.time()
                 # logger states
                 logger.step = step
 
@@ -104,6 +109,8 @@ class BaseTrainer:
                 self.in_train_batch(logger, data)
 
                 # print logs
+                logger.data_time = step_start_time - step_data_time
+                logger.runtime = time.time() - step_start_time
                 if (step+1)%print_steps==0:
                     logger.print_training(batch_bar, print_steps)
                 elif step == len(self.train_loader) -1:
@@ -115,6 +122,7 @@ class BaseTrainer:
 
                 self.on_train_batch_end(logger)       # customize
                 logger.step_acc += 1
+                step_data_time = time.time()
 
             if write_summary_epoch and (epoch + 1) % write_summary_epoch == 0:
                 logger.write_summary_loss_metrics(train=True)
@@ -125,14 +133,13 @@ class BaseTrainer:
                 self.lr_scheduler.step()
 
             # 3. test
-            if (epoch+1)%val_epoches==0:
+            if (epoch+1)%val_epochs==0:
                 self.test(logger)
                 logger.print_val()
                 logger.write_summary_loss_metrics(train=False)
-                print("")
 
             # 4. save weights
-            if epoch == epoches-1:
+            if epoch == epochs-1:
                 self.save(logger, optimizer=True)
             elif (epoch+1)%save_weights_epoch == 0:
                 self.save(logger)
@@ -288,7 +295,7 @@ class BaseTrainer:
         if optimizer:
             fn = os.path.join(logger.log_dir, "optimizer.t7")
             torch.save(self.optimizer.state_dict(), fn)
-            print("Save optimizer to %s\n"%fn)
+            logger.log("Save optimizer to %s\n"%fn)
 
         dir_checkpoints = os.path.join(logger.log_dir, 'checkpoints')
         if not os.path.exists(dir_checkpoints):
@@ -300,7 +307,7 @@ class BaseTrainer:
             torch.save(self.model.module.state_dict(), fn)
         else:
             torch.save(self.model.state_dict(), fn)
-        print("Save model to %s\n" % fn)
+        logger.log("Save model to %s\n" % fn)
 
     def load_optimizer(self, fn):
         ck = torch.load(fn)

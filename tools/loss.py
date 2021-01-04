@@ -43,7 +43,6 @@ class Loss:
 
         return loss
 
-
     @staticmethod
     def JaccardLoss(output, target, weights=None):
         # type:(Tensor, Tensor, Tensor) -> Tensor
@@ -76,8 +75,6 @@ class Loss:
 
         return loss
 
-
-
     @staticmethod
     def JaccardCrossEntropyLoss(output, target, weights=None):
         # type:(Tensor, Tensor, Tensor) -> Tensor
@@ -94,7 +91,6 @@ class Loss:
 
         loss = -torch.log(iou).mean() + CE
         return loss
-
 
     @staticmethod
     def JaccardBCELossClass(output, target, weights=None):
