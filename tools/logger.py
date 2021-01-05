@@ -74,7 +74,7 @@ class Logger:
 
         log_str = '; '.join(["%s %.4f" % (name, v) for name, v in zip(names, values)])
         log_str = 'epoch %d, step %d: time %.3f; data %.3f; loss %.4f; %s' % \
-                  (epoch, step, self.runtime, self.data_time, self.loss_acc, log_str)
+                  (epoch, step+1, self.runtime, self.data_time, self.loss_acc, log_str)
 
         if tbar:
             tbar.set_description(log_str)
