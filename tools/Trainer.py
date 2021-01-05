@@ -46,21 +46,21 @@ class BaseTrainer:
               start_epoch=0,
               val_epochs=1,
               print_steps=10,
-              write_summary_epoch=None,
+              write_summary_epochs=None,
               write_summary_steps=10,
-              save_weights_epoch=1):
+              save_weights_epochs=1):
         """
         Train the model for (end_epoch-start_epoch) epochs.
         @param epochs: the number of epochs throughout the training phase
         @param start_epoch: the start training epoch
         @param val_epochs: the interval (epochs) between two validatings.
         @param print_steps: the interval (steps) between two printings
-        @param write_summary_epoch: the interval (epochs) between two summary writings.
+        @param write_summary_epochs: the interval (epochs) between two summary writings.
                     If specified, this will override write_summary_steps.
         @param write_summary_steps: the interval (steps) between two summary writings.
-        @param save_weights_epoch: the interval (epochs) between two weights savings
+        @param save_weights_epochs: the interval (epochs) between two weights savings
         """
-        if write_summary_epoch:
+        if write_summary_epochs:
             write_summary_steps=None
 
         # global states
@@ -123,7 +123,7 @@ class BaseTrainer:
                 logger.step_acc += 1
                 step_data_time = time.time()
 
-            if write_summary_epoch and (epoch + 1) % write_summary_epoch == 0:
+            if write_summary_epochs and (epoch + 1) % write_summary_epochs == 0:
                 logger.write_summary_loss_metrics(train=True)
             batch_bar.close()
 
@@ -140,7 +140,7 @@ class BaseTrainer:
             # 4. save weights
             if epoch == epochs-1:
                 self.save(logger, optimizer=True)
-            elif (epoch+1)%save_weights_epoch == 0:
+            elif (epoch+1)%save_weights_epochs == 0:
                 self.save(logger)
 
             self.on_epoch_end(logger)
