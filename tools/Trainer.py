@@ -283,8 +283,10 @@ class BaseTrainer:
         fn = os.path.join(dir_checkpoints, "%d_%s_%.4f.t7" % (logger.epoch, 'loss', logger.val_loss_acc))
         if isinstance(self.model, nn.DataParallel):
             torch.save(self.model.module.state_dict(), fn)
+            torch.save(self.model.module.state_dict(), os.path.join(dir_checkpoints, "latest.t7"))
         else:
             torch.save(self.model.state_dict(), fn)
+            torch.save(self.model.state_dict(), os.path.join(dir_checkpoints, "latest.t7"))
         logger.log("Save model to %s\n" % fn)
 
     def load_optimizer(self, fn):
