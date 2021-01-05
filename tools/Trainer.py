@@ -80,14 +80,11 @@ class BaseTrainer:
             logger.log('================ Training Loss (%s) ================' % now)
 
             logger.epoch = epoch + 1
-            logger.lr = self.optimizer.state_dict()['param_groups'][0]['lr']
             logger.step = 0
             logger.loss_acc = 0.
             logger.metric_values_acc = [0.]*len(self.metrics)
             logger.metric_values = [0.]*len(self.metrics)
             logger.losses = [0.]*len(logger.loss_names)
-
-            logger.write_summary_params(True)
 
             # zero the accumulated values
             for m in self.metrics:
@@ -103,6 +100,7 @@ class BaseTrainer:
                 step_start_time = time.time()
                 # logger states
                 logger.step = step
+                logger.lr = self.optimizer.state_dict()['param_groups'][0]['lr']
 
                 self.on_train_batch_begin(logger)     # customize
 
@@ -119,6 +117,7 @@ class BaseTrainer:
                 # write summary
                 if write_summary_steps and (logger.step_acc+1)%write_summary_steps==0:
                     logger.write_summary_loss_metrics(train=True)
+                    logger.write_summary_params(logger.step_acc, True)
 
                 self.on_train_batch_end(logger)       # customize
                 logger.step_acc += 1

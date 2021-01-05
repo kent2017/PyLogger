@@ -111,11 +111,9 @@ class Logger:
             for name, v in zip(metric_names, metric_values):
                 self.writer.add_scalar('%s/test'%(name), v, self.epoch)
 
-    def write_summary_params(self, train=True):
-        epoch = self.epoch
-
+    def write_summary_params(self, step, train=True):
         if train:
-            self.writer.add_scalar('params/lr', self.lr, epoch)
+            self.writer.add_scalar('params/lr', self.lr, step)
         else:
             pass
 
