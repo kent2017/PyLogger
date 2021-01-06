@@ -279,7 +279,7 @@ class BaseTrainer:
             os.mkdir(dir_checkpoints)
 
         # save
-        fn = os.path.join(dir_checkpoints, "%d_%s_%.4f.t7" % (logger.epoch, 'loss', logger.val_loss_acc))
+        fn = os.path.join(dir_checkpoints, "%d_%s_%.4f.t7" % (logger.epoch, 'loss', logger.loss_acc))
         if isinstance(self.model, nn.DataParallel):
             torch.save(self.model.module.state_dict(), fn)
             torch.save(self.model.module.state_dict(), os.path.join(dir_checkpoints, "latest.t7"))
